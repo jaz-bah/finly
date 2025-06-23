@@ -1,103 +1,168 @@
-import Image from "next/image";
+"use client";
+
+import BalanceCard from "@/components/card/BalanceCard";
+import TransactionCard from "@/components/card/TransactionCard";
+import { MonthlyChart } from "@/components/chart/MonthlyChart";
+import { MonthlySavings } from "@/components/chart/MonthlySavings";
+import { SavingsChart } from "@/components/chart/SavingsChart";
+import { WeeklyChart } from "@/components/chart/WeeklyChart";
+import { caculateTransaction } from "@/helper/calculation";
+import {
+  getAllSavingsTransactions,
+  getCurrentMonthTransactions,
+  getPreviousMonthTransactions
+} from "@/requests/transaction.request";
+import { ITransaction } from "@/types/transaction.type";
+import { useQuery } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const { data: session } = useSession();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const { data: thisMonthTransactions, isLoading, error } = useQuery({
+    queryKey: ['transactions-this-month'],
+    queryFn: () => getCurrentMonthTransactions(session?.user.id),
+    enabled: !!session?.user?.id,
+    staleTime: 1000 * 60 * 60 * 24
+  });
+
+
+  const { data: prevMonthTransactions } = useQuery({
+    queryKey: ['transactions-previous-month'],
+    queryFn: () => getPreviousMonthTransactions(session?.user.id),
+    enabled: !!session?.user?.id,
+    staleTime: 1000 * 60 * 60 * 24
+  });
+
+
+  const { data: allSavings, isLoading: allSavingsLoading } = useQuery({
+    queryKey: ['transactions-all-savings'],
+    queryFn: () => getAllSavingsTransactions(session?.user.id),
+    enabled: !!session?.user?.id,
+    staleTime: 1000 * 60 * 60 * 24
+  });
+
+  // cureent month states
+  const [thisMonthAllTransactions, setThisMonthAllTransactions] = useState<ITransaction[]>([]);
+  const [totalBalance, setTotalBalance] = useState<number>(0);
+  const [totalIncome, setTotalIncome] = useState<number>(0);
+  const [totalExpense, setTotalExpense] = useState<number>(0);
+  const [totalSavings, setTotalSavings] = useState<number>(0);
+  
+  // previous month states
+  const [prevTotalBalance, setPrevTotalBalance] = useState<number>(0);
+  const [prevTotalIncome, setPrevTotalIncome] = useState<number>(0);
+  const [prevTotalExpense, setPrevTotalExpense] = useState<number>(0);
+  const [prevTotalSavings, setPrevTotalSavings] = useState<number>(0);
+  
+  
+  // savings states
+  const [allSavingsTransactions, setAllSavingsTransactions] = useState<ITransaction[]>([]);
+  const [allSavingsTotal, setAllSavingsTotal] = useState<number>(0);
+  
+
+
+  useEffect(() => {
+    if (thisMonthTransactions?.data?.transactions) {
+      const {
+        totalBalance,
+        totalIncome,
+        totalExpense,
+        totalSavings
+      } = caculateTransaction(thisMonthTransactions.data.transactions);
+
+      setThisMonthAllTransactions(thisMonthTransactions.data.transactions);
+      setTotalBalance(totalBalance);
+      setTotalIncome(totalIncome);
+      setTotalExpense(totalExpense);
+      setTotalSavings(totalSavings);
+    }
+  }, [thisMonthTransactions]);
+
+
+  useEffect(() => {
+    if (allSavings?.data?.transactions) {
+      const {
+        totalSavings: allSavingsTotal
+      } = caculateTransaction(allSavings.data.transactions);
+
+      setAllSavingsTransactions(allSavings.data.transactions);
+      setAllSavingsTotal(allSavingsTotal);
+    }
+  }, [allSavings]);
+
+
+  useEffect(() => {
+    if (prevMonthTransactions?.data?.transactions) {
+      const {
+        totalBalance: prevTotalBalance,
+        totalIncome: prevTotalIncome,
+        totalExpense: prevTotalExpense,
+        totalSavings: prevTotalSavings
+      } = caculateTransaction(prevMonthTransactions.data.transactions);
+
+      setPrevTotalBalance(prevTotalBalance);
+      setPrevTotalIncome(prevTotalIncome);
+      setPrevTotalExpense(prevTotalExpense);
+      setPrevTotalSavings(prevTotalSavings);
+    }
+  }, [prevMonthTransactions]);
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-4 gap-x-0 2xl:gap-x-4 gap-y-4 py-4">
+        <div className="col-span-2">
+          {!error &&
+            <BalanceCard
+              totalBalance={totalBalance}
+              totalIncome={totalIncome}
+              totalExpense={totalExpense}
+              isLoading={isLoading}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          }
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        <div className="col-span-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+          <TransactionCard
+            type={"income"}
+            total={totalIncome}
+            prevTotal={prevTotalIncome}
+            isLoading={isLoading}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
+
+          <TransactionCard
+            type={"expense"}
+            total={totalExpense}
+            prevTotal={prevTotalExpense}
+            isLoading={isLoading}
           />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+
+          <TransactionCard
+            type={"saving"}
+            total={totalSavings}
+            prevTotal={prevTotalSavings}
+            isLoading={isLoading}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+          <TransactionCard
+            type={"total savings"}
+            total={allSavingsTotal}
+            isLoading={allSavingsLoading}
+          />
+        </div>
+      </div>
+
+
+      <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+        <WeeklyChart allTransactions={thisMonthAllTransactions} />
+        <SavingsChart allSavings={allSavingsTotal} />
+        <MonthlySavings allSavingsTransactions={allSavingsTransactions} />
+      </div>
+
+      <MonthlyChart allTransactions={thisMonthAllTransactions} />
+
+      <span className="hidden">{prevTotalBalance}</span>
+    </>
   );
 }
