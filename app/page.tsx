@@ -21,7 +21,7 @@ export default function Home() {
   const { data: session } = useSession();
 
   const { data: thisMonthTransactions, isLoading, error } = useQuery({
-    queryKey: ['transactions-this-month'],
+    queryKey: ['transactions'],
     queryFn: () => getCurrentMonthTransactions(session?.user.id),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24
@@ -29,7 +29,7 @@ export default function Home() {
 
 
   const { data: prevMonthTransactions } = useQuery({
-    queryKey: ['transactions-previous-month'],
+    queryKey: ['transactions'],
     queryFn: () => getPreviousMonthTransactions(session?.user.id),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24
@@ -37,7 +37,7 @@ export default function Home() {
 
 
   const { data: allSavings, isLoading: allSavingsLoading } = useQuery({
-    queryKey: ['transactions-all-savings'],
+    queryKey: ['transactions'],
     queryFn: () => getAllSavingsTransactions(session?.user.id),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24

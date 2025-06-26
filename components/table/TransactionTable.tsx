@@ -58,9 +58,6 @@ export default function TransactionTable() {
             toast.success("Transaction deleted successfully.");
 
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-this-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
 
             setDeletingItem(null);
         },
@@ -192,6 +189,7 @@ export default function TransactionTable() {
                                                     variant='destructive'
                                                     size='icon'
                                                     onClick={() => handleDelete(tx._id)}
+                                                    disabled={deletingItem === tx._id}
                                                 >
                                                     {deletingItem === tx._id ? <Loader2 className='animate-spin' /> : <Trash2 />}
                                                 </Button>

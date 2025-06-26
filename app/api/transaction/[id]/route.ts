@@ -2,46 +2,31 @@ import { connectToDatabase } from "@/lib/db";
 import Transaction from "@/models/transaction.model";
 import { NextRequest, NextResponse } from "next/server";
 
-type Params = {
-    params: {
-        id: string;
-    };
-};
-
-export async function DELETE(request: NextRequest, response: NextResponse, { params }: Params) {
-
-    const { id } = params;
-
-    console.log(response, request);
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
     try {
         await connectToDatabase();
-        
-        const response = await Transaction.findByIdAndDelete(id);
 
-        if (!response) {
+        const deletedTransaction = await Transaction.findByIdAndDelete(id);
+
+        if (!deletedTransaction) {
             return NextResponse.json({ message: "Transaction not found" }, { status: 404 });
         }
 
         return NextResponse.json({ message: "Transaction deleted successfully" }, { status: 200 });
     } catch (error) {
-        return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+        return NextResponse.json({ message: (error as Error).message }, { status: 500 });
     }
 }
 
 
-export async function PUT(request: NextRequest, response: NextResponse, { params }: Params, ) {
 
-    const { id } = params;
-
-    console.log(response);
-
-    if(!id) {
-        return NextResponse.json({ message: "Transaction id is required" }, { status: 400 });
-    }
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
 
     try {
-        const { userId, type, amount, note, date } = await request.json();
+        const { userId, type, amount, note, date } = await req.json();
 
         await connectToDatabase();
 

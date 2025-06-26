@@ -66,9 +66,6 @@ export default function AddTransactionForm() {
             form.reset();
             
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-this-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
             
             toast.success("Transaction created successfully.");
             onClose();
@@ -85,7 +82,7 @@ export default function AddTransactionForm() {
     function onSubmit(values: z.infer<typeof formSchema>) {
         const { type, amount, note, date } = values;
 
-        // setIsSubmitting(true);
+        setIsSubmitting(true);
 
         if (!session?.user?.id) {
             toast.error("User not found.");
@@ -220,7 +217,7 @@ export default function AddTransactionForm() {
                     <DialogClose asChild>
                         <Button variant="outline" ref={closeBtnRef}>Cancel</Button>
                     </DialogClose>
-                    <Button type="submit">
+                    <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Add"}
                     </Button>
                 </DialogFooter>
