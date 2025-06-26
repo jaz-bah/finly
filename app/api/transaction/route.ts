@@ -1,5 +1,7 @@
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import Transaction from "@/models/transaction.model";
+import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
 interface getQuery {
@@ -14,25 +16,32 @@ interface getQuery {
 }
 
 export async function GET(request: NextRequest) {
+    const session = await getServerSession(authOptions);
+
+    if(!session?.user?.id) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
     try {
         await connectToDatabase();
 
+        const userId: string = session.user.id as string;
+
         const { searchParams } = request.nextUrl;
-        const userId = searchParams.get("user");
         const type = searchParams.get("type");
         const start = searchParams.get("startdate");
         const end = searchParams.get("enddate");
         const page = searchParams.get("page");
         const limit = searchParams.get("limit");
 
-        if(!userId){
+        if (!userId) {
             return NextResponse.json({ message: "userId is required" }, { status: 400 });
         }
 
         const query: getQuery = {
             userId
         };
-        
+
         if (type) query.type = type;
 
         // Handle date range
@@ -112,8 +121,15 @@ export async function GET(request: NextRequest) {
 
 
 export async function POST(request: NextRequest) {
+    const session = await getServerSession(authOptions);
+
+    if(!session?.user?.id) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    
     try {
-        const {userId, type, amount, note, date} = await request.json();
+        const userId: string = session.user.id as string;
+        const { type, amount, note, date } = await request.json();
 
         if (!userId || !type || !amount) {
             return NextResponse.json(

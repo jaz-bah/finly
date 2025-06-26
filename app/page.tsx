@@ -21,24 +21,24 @@ export default function Home() {
   const { data: session } = useSession();
 
   const { data: thisMonthTransactions, isLoading, error } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => getCurrentMonthTransactions(session?.user.id),
+    queryKey: ['transactions-current-month'],
+    queryFn: () => getCurrentMonthTransactions(),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24
   });
 
 
   const { data: prevMonthTransactions } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => getPreviousMonthTransactions(session?.user.id),
+    queryKey: ['transactions-previous-month'],
+    queryFn: () => getPreviousMonthTransactions(),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24
   });
 
 
   const { data: allSavings, isLoading: allSavingsLoading } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => getAllSavingsTransactions(session?.user.id),
+    queryKey: ['transactions-all-savings'],
+    queryFn: () => getAllSavingsTransactions(),
     enabled: !!session?.user?.id,
     staleTime: 1000 * 60 * 60 * 24
   });
@@ -49,18 +49,18 @@ export default function Home() {
   const [totalIncome, setTotalIncome] = useState<number>(0);
   const [totalExpense, setTotalExpense] = useState<number>(0);
   const [totalSavings, setTotalSavings] = useState<number>(0);
-  
+
   // previous month states
   const [prevTotalBalance, setPrevTotalBalance] = useState<number>(0);
   const [prevTotalIncome, setPrevTotalIncome] = useState<number>(0);
   const [prevTotalExpense, setPrevTotalExpense] = useState<number>(0);
   const [prevTotalSavings, setPrevTotalSavings] = useState<number>(0);
-  
-  
+
+
   // savings states
   const [allSavingsTransactions, setAllSavingsTransactions] = useState<ITransaction[]>([]);
   const [allSavingsTotal, setAllSavingsTotal] = useState<number>(0);
-  
+
 
 
   useEffect(() => {
@@ -129,6 +129,7 @@ export default function Home() {
             total={totalIncome}
             prevTotal={prevTotalIncome}
             isLoading={isLoading}
+            url="/transactions?type=income"
           />
 
           <TransactionCard
@@ -136,6 +137,7 @@ export default function Home() {
             total={totalExpense}
             prevTotal={prevTotalExpense}
             isLoading={isLoading}
+            url="/transactions?type=expense"
           />
 
           <TransactionCard
@@ -143,6 +145,7 @@ export default function Home() {
             total={totalSavings}
             prevTotal={prevTotalSavings}
             isLoading={isLoading}
+            url="/transactions?type=savings"
           />
 
           <TransactionCard

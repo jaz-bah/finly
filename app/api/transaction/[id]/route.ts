@@ -1,5 +1,7 @@
+import { authOptions } from "@/lib/auth";
 import { connectToDatabase } from "@/lib/db";
 import Transaction from "@/models/transaction.model";
+import { getServerSession } from "next-auth/next";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -24,9 +26,15 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+        return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     try {
-        const { userId, type, amount, note, date } = await req.json();
+        const userId: string = session.user.id as string;
+        const { type, amount, note, date } = await req.json();
 
         await connectToDatabase();
 

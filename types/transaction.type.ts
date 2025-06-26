@@ -13,7 +13,6 @@ export interface ITransaction {
 
 
 export interface ICreateTransactionPayload {
-    userId: String,
     type: 'income' | 'expense' | 'savings',
     amount: Number,
     note: string,

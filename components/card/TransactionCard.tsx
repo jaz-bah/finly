@@ -23,22 +23,10 @@ interface Props {
   total: number;
   prevTotal?: number;
   isLoading?: boolean;
+  url?: string;
 }
 
-export default function TransactionCard({ type, total, prevTotal, isLoading }: Props) {
-
-  const urlFinder = (type: string) => {
-    switch (type) {
-      case "income":
-        return "/income";
-      case "expense":
-        return "/expense";
-      case "saving":
-        return "/saving";
-      default:
-        return "/";
-    }
-  };
+export default function TransactionCard({ type, total, prevTotal, isLoading, url }: Props) {
 
   const descriptionGenerator = (type: string) => {
     switch (type) {
@@ -55,7 +43,7 @@ export default function TransactionCard({ type, total, prevTotal, isLoading }: P
     }
   };
 
-  if(isLoading) return <TransactionCardSkeleton />;
+  if (isLoading) return <TransactionCardSkeleton />;
 
   return (
     <Card className="h-full">
@@ -65,16 +53,18 @@ export default function TransactionCard({ type, total, prevTotal, isLoading }: P
         </CardTitle>
         <CardDescription className="hidden sm:block">{descriptionGenerator(type)}</CardDescription>
 
-        <CardAction className="flex justify-end">
-          <Button
-            variant="outline"
-            className="cursor-pointer"
-            size="sm"
-            asChild
-          >
-            <Link href={urlFinder(type)}>View all</Link>
-          </Button>
-        </CardAction>
+        {url ? (
+          <CardAction className="flex justify-end">
+            <Button
+              variant="outline"
+              className="cursor-pointer"
+              size="sm"
+              asChild
+            >
+              <Link href={url}>View all</Link>
+            </Button>
+          </CardAction>
+        ) : null}
       </CardHeader>
       <CardContent>
         <div className="flex w-full justify-between">

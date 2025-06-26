@@ -36,15 +36,11 @@ export const getUserAllTransactions = async ({ userId, type, page, limit }: getQ
 
 // get current month transactions
 
-export const getCurrentMonthTransactions = async (userId: String | undefined) => {
-    if (!userId) {
-        throw new Error("userId is required");
-    }
-
+export const getCurrentMonthTransactions = async () => {
     const startDate = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
     const endDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
 
-    const res = await fetch(`/api/transaction?user=${userId}&startdate=${startDate}&enddate=${endDate}`);
+    const res = await fetch(`/api/transaction?startdate=${startDate}&enddate=${endDate}`);
 
     if (!res.ok) {
         throw new Error((await res.json()).message);
@@ -56,15 +52,11 @@ export const getCurrentMonthTransactions = async (userId: String | undefined) =>
 
 // get all transactions previous month
 
-export const getPreviousMonthTransactions = async (userId: String | undefined) => {
-    if (!userId) {
-        throw new Error("userId is required");
-    }
-
+export const getPreviousMonthTransactions = async () => {
     const startDate = new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
     const endDate = new Date(new Date().getFullYear(), new Date().getMonth(), 0);
 
-    const res = await fetch(`/api/transaction?user=${userId}&startdate=${startDate}&enddate=${endDate}`);
+    const res = await fetch(`/api/transaction?startdate=${startDate}&enddate=${endDate}`);
 
     if (!res.ok) {
         throw new Error((await res.json()).message);
@@ -76,12 +68,8 @@ export const getPreviousMonthTransactions = async (userId: String | undefined) =
 
 // get all savings transactions
 
-export const getAllSavingsTransactions = async (userId: String | undefined) => {
-    if (!userId) {
-        throw new Error("userId is required");
-    }
-
-    const res = await fetch(`/api/transaction?user=${userId}&type=savings`);
+export const getAllSavingsTransactions = async () => {
+    const res = await fetch(`/api/transaction?type=savings`);
 
     if (!res.ok) {
         throw new Error((await res.json()).message);
@@ -94,15 +82,15 @@ export const getAllSavingsTransactions = async (userId: String | undefined) => {
 // create transaction
 
 export const createTransaction = async (payload: ICreateTransactionPayload) => {
-    const { userId, type, amount, note, date } = payload;
+    const { type, amount, note, date } = payload;
 
-    if (!userId || !type || !amount) {
+    if (!type || !amount) {
         throw new Error("userId, type and amount are required");
     }
 
     const res = await fetch("/api/transaction", {
         method: "POST",
-        body: JSON.stringify({ userId, type, amount, note, date }),
+        body: JSON.stringify({ type, amount, note, date }),
     });
 
     if (!res.ok) {
@@ -117,10 +105,10 @@ export const createTransaction = async (payload: ICreateTransactionPayload) => {
 // update transaction
 
 export const updateTransaction = async (id: ObjectId, updateTransaction: ICreateTransactionPayload) => {
-    const { userId, type, amount, note, date } = updateTransaction;
+    const { type, amount, note, date } = updateTransaction;
     const res = await fetch(`/api/transaction/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ userId, type, amount, note, date }),
+        body: JSON.stringify({ type, amount, note, date }),
     });
 
     if (!res.ok) {

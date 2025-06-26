@@ -71,6 +71,9 @@ export default function AddTransactionForm({ transaction }: Props) {
             form.reset();
 
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-current-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
 
             toast.success("Transaction updated successfully.");
             onClose();
@@ -98,7 +101,6 @@ export default function AddTransactionForm({ transaction }: Props) {
         date.setHours(7, 0, 0, 0);
 
         const updateTransaction = {
-            userId: session.user.id,
             type,
             amount: Number(amount),
             note,

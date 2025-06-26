@@ -66,6 +66,9 @@ export default function AddTransactionForm() {
             form.reset();
             
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-current-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
             
             toast.success("Transaction created successfully.");
             onClose();
@@ -93,7 +96,6 @@ export default function AddTransactionForm() {
         date.setHours(7, 0, 0, 0);
 
         const newTransaction = {
-            userId: session.user.id,
             type,
             amount: Number(amount),
             note,

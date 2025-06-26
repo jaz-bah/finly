@@ -12,22 +12,24 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Edit, Loader2, Search, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import BarLoader from '../loader/BarLoader';
 import { EditTransactionModal } from '../modal/EditTransactionModal';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
+import { useSearchParams } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 20;
 
 export default function TransactionTable() {
     const queryClient = useQueryClient();
     const { data: session } = useSession();
+    const searchParams = useSearchParams();
 
     const [search, setSearch] = useState('');
     const [selected, setSelected] = useState<ObjectId[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
-    const [type, setType] = useState('all');
+    const [type, setType] = useState("all");
 
     // Query for transactions
     const { data, isLoading, error } = useQuery({
@@ -58,6 +60,9 @@ export default function TransactionTable() {
             toast.success("Transaction deleted successfully.");
 
             queryClient.invalidateQueries({ queryKey: ['transactions'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-current-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
+            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
 
             setDeletingItem(null);
         },
@@ -86,8 +91,17 @@ export default function TransactionTable() {
     const handleEdit = (transaction: ITransaction) => {
         seteditTransaction(transaction);
         setEditModalStatus(true);
-        console.log(transaction);
     };
+
+    useEffect(() => {
+        const typeParam = searchParams.get("type");
+
+        if (typeParam) {
+            setType(typeParam);
+        } else {
+            setType("all");
+        }
+    }, [searchParams]);
 
     return (
         <>
