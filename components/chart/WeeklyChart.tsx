@@ -94,7 +94,7 @@ export function WeeklyChart({ allTransactions }: Props) {
                 </ChartContainer>
             </CardContent>
             <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex items-center gap-2 w-full overflow-y-scroll">
+                <div className="flex items-center gap-2 w-full overflow-y-scroll no-scrollbar">
                     <ToggleGroup
                         variant="outline"
                         type="single"

@@ -635,3 +635,8 @@
     transform: translateX(200%);
   }
 }
+
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

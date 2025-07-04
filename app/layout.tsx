@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Finly",
   description: "Your personal finance assistant",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

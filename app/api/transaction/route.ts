@@ -92,8 +92,7 @@ export async function GET(request: NextRequest) {
             const limitInt = parseInt(limit, 10);
             transactions = await Transaction.find(query)
                 .skip((pageInt - 1) * limitInt)
-                .limit(limitInt)
-                .sort({ date: -1 });
+                .limit(limitInt);
 
             response = {
                 data: { transactions },
@@ -102,7 +101,7 @@ export async function GET(request: NextRequest) {
                 limit: limitInt
             };
         } else {
-            transactions = await Transaction.find(query).sort({ date: -1 });
+            transactions = await Transaction.find(query);
             response = {
                 data: { transactions },
                 total

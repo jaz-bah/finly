@@ -6,21 +6,16 @@ import { ObjectId } from "@/types/mongoose.types";
 import { ICreateTransactionPayload } from "@/types/transaction.type";
 
 interface getQuery {
-    userId: String | undefined;
     type?: string;
     page?: Number;
     limit?: number;
 }
 
-export const getUserAllTransactions = async ({ userId, type, page, limit }: getQuery) => {
-    if (!userId) {
-        throw new Error("userId is required");
-    }
-
-    let baseUrl = `/api/transaction?user=${userId}`;
+export const getUserAllTransactions = async ({ type, page, limit }: getQuery) => {
+    let baseUrl = `/api/transaction`;
 
     if (type || page || limit) {
-        baseUrl += `&page=${page}&limit=${limit}`;
+        baseUrl += `?page=${page}&limit=${limit}`;
 
         type !== "all" ? baseUrl += `&type=${type}` : null;
     }

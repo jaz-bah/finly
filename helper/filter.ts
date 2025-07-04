@@ -1,3 +1,4 @@
+import { IRecurring } from "@/types/recurring.types";
 import { ITransaction } from "@/types/transaction.type";
 
 const _ = require('underscore');
@@ -59,4 +60,58 @@ export function sumSavingsByDate(data: ITransaction[], slug: string = "date-mont
             amount: _.reduce(items, (sum: any, item: { amount: any; }) => sum + item.amount, 0),
         };
     });
+}
+
+
+export function recurringsFilter(recurrings: IRecurring[]) {
+    const weeklyRecurrings = recurrings.filter((recurring) => recurring.frequency === "weekly");
+    const monthlyRecurrings = recurrings.filter((recurring) => recurring.frequency === "monthly");
+
+    // check weekly recurrings
+    const updateableWeeklyRecurrings : IRecurring[] = weeklyRecurrings.filter((recurring) => {
+        if (recurring.last_updated) {
+            const lastUpdated = new Date(recurring.last_updated);
+            const today = new Date();
+
+            lastUpdated.setHours(0, 0, 0, 0);
+            today.setHours(0, 0, 0, 0);
+
+            let checkDate = new Date(lastUpdated);
+            checkDate.setDate(checkDate.getDate() + 1);
+
+            while (checkDate <= today) {
+                if (checkDate.getDay() === 5) { // Friday is 5
+                    return true;
+                }
+                checkDate.setDate(checkDate.getDate() + 1);
+            }
+
+            return false;
+        } else {
+            return true;
+        }
+    });
+
+
+    // check monthly recurrings
+    const updateableMonthlyRecurrings : IRecurring[] = monthlyRecurrings.filter((recurring) => {
+        if (recurring.last_updated) {
+            const lastUpdated = new Date(recurring.last_updated);
+            const today = new Date();
+    
+            return (
+                lastUpdated.getMonth() !== today.getMonth() ||
+                lastUpdated.getFullYear() !== today.getFullYear()
+            );
+        } else {
+            return true; 
+        }
+    });
+
+
+    const updateableRecurrings : IRecurring[] = updateableWeeklyRecurrings.concat(updateableMonthlyRecurrings);
+
+    console.log(updateableRecurrings);
+
+    return updateableRecurrings;
 }

@@ -1,8 +1,12 @@
-import CommingSoon from '@/components/layout/CommingSoon'
-import React from 'react'
+import RecurringTable from '@/components/table/RecurringTable'
+import { Suspense } from 'react'
 
 export default function page() {
   return (
-    <CommingSoon />
+    <>
+      <Suspense>
+        <RecurringTable />
+      </Suspense>
+    </>
   )
 }

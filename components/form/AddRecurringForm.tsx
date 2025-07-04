@@ -8,9 +8,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { updateTransaction } from "@/requests/transaction.request";
-import { ObjectId } from "@/types/mongoose.types";
-import { ICreateTransactionPayload, ITransaction } from "@/types/transaction.type";
+import { createRecurring } from "@/requests/recurring.request";
+import { ICreateRecurringPayload } from "@/types/recurring.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -19,7 +18,6 @@ import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
-import { DatePicker } from "../DatePicker";
 import { Button } from "../ui/button";
 import { DialogClose, DialogFooter } from "../ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
@@ -31,14 +29,13 @@ const formSchema = z.object({
     }),
     amount: z.string(),
     note: z.string(),
-    date: z.date(),
+    frequency: z.enum(['weekly', 'monthly'], {
+        invalid_type_error: "Please select a valid frequency.",
+    })
 });
 
-interface Props {
-    transaction: ITransaction
-}
 
-export default function EditTransactionForm({ transaction }: Props) {
+export default function AddRecurringForm() {
     const { data: session } = useSession();
     const queryClient = useQueryClient();
     const closeBtnRef = useRef<HTMLButtonElement>(null);
@@ -57,30 +54,25 @@ export default function EditTransactionForm({ transaction }: Props) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            type: transaction.type,
-            amount: transaction.amount.toString(),
-            note: transaction.note,
-            date: new Date(transaction.date),
+            amount: "",
+            note: "",
         },
     });
 
-    // create transaction mutation
-    const editTransactionMutation = useMutation({
-        mutationFn: async ({ id, payload }: { id: ObjectId; payload: ICreateTransactionPayload }) => updateTransaction(id, payload),
+    // create recurring mutation
+    const createRecurringMutation = useMutation({
+        mutationFn: async (payload: ICreateRecurringPayload) => createRecurring(payload),
         onSuccess: () => {
             form.reset();
 
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-current-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
+            queryClient.invalidateQueries({ queryKey: ['recurring'] });
 
-            toast.success("Transaction updated successfully.");
+            toast.success("Recurring created successfully.");
             onClose();
             setIsSubmitting(false);
         },
         onError: () => {
-            toast.error("Failed to update transaction.");
+            toast.error("Failed to create recurring.");
             setIsSubmitting(false);
         }
     });
@@ -88,7 +80,7 @@ export default function EditTransactionForm({ transaction }: Props) {
 
     // submit handler
     function onSubmit(values: z.infer<typeof formSchema>) {
-        const { type, amount, note, date } = values;
+        const { type, amount, note, frequency } = values;
 
         setIsSubmitting(true);
 
@@ -98,16 +90,14 @@ export default function EditTransactionForm({ transaction }: Props) {
             return;
         }
 
-        date.setHours(7, 0, 0, 0);
-
-        const updateTransaction = {
+        const newRecurring = {
             type,
             amount: Number(amount),
             note,
-            date
+            frequency
         }
 
-        editTransactionMutation.mutate({ id: transaction._id, payload: updateTransaction });
+        createRecurringMutation.mutate(newRecurring);
     }
 
     return (
@@ -177,16 +167,30 @@ export default function EditTransactionForm({ transaction }: Props) {
 
                     <FormField
                         control={form.control}
-                        name="date"
+                        name="frequency"
                         render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Date</FormLabel>
+                                <FormLabel>Frequency</FormLabel>
                                 <FormControl>
-                                    <DatePicker field={field} />
+                                    <Select
+                                        onValueChange={(value) => field.onChange(value)}
+                                        value={field.value}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select a Frequency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectGroup>
+                                                <SelectItem value="weekly">Weekly</SelectItem>
+                                                <SelectItem value="monthly">Monthly</SelectItem>
+                                            </SelectGroup>
+                                        </SelectContent>
+                                    </Select>
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
                         )}
+
                     />
                 </div>
 
@@ -195,7 +199,7 @@ export default function EditTransactionForm({ transaction }: Props) {
                         <Button variant="outline" ref={closeBtnRef}>Cancel</Button>
                     </DialogClose>
                     <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Save"}
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Add"}
                     </Button>
                 </DialogFooter>
             </form>

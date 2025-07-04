@@ -36,6 +36,31 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const userId: string = session.user.id as string;
         const { type, amount, note, date } = await req.json();
 
+        if (!userId || !type || !amount) {
+            return NextResponse.json(
+                {
+                    message: "userId, type and amount are required"
+                },
+                {
+                    status: 400
+                }
+            )
+        }
+
+
+        if (type !== "income" && type !== "expense" && type !== "savings") {
+            return NextResponse.json(
+                {
+                    message: "type must be income, expense or savings"
+                },
+                {
+                    status: 400
+                }
+            )
+        }
+
+        
+
         await connectToDatabase();
 
         const response = await Transaction.findByIdAndUpdate(id, { userId, type, amount, note, date }, { new: true });

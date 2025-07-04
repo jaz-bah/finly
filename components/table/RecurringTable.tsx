@@ -5,23 +5,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { deleteTransaction, getUserAllTransactions } from '@/requests/transaction.request';
+import { deleteRecurring, getUserAllRecurrings } from '@/requests/recurring.request';
 import { ObjectId } from '@/types/mongoose.types';
-import { ITransaction } from '@/types/transaction.type';
+import { IRecurring } from '@/types/recurring.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
 import { Edit, Loader2, Search, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import BarLoader from '../loader/BarLoader';
-import { EditTransactionModal } from '../modal/EditTransactionModal';
+import { AddRecurringModal } from '../modal/AddRecurringModal';
+import { EditRecurringModal } from '../modal/EditRecurringModal';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { useSearchParams } from 'next/navigation';
 
 const ITEMS_PER_PAGE = 20;
 
-export default function TransactionTable() {
+export default function RecurringTable() {
     const queryClient = useQueryClient();
     const { data: session } = useSession();
     const searchParams = useSearchParams();
@@ -30,21 +30,29 @@ export default function TransactionTable() {
     const [selected, setSelected] = useState<ObjectId[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [type, setType] = useState("all");
+    // const [frequency, setFrequency] = useState("all")
 
     // Query for transactions
+    const query = {
+        page: currentPage,
+        limit: ITEMS_PER_PAGE,
+        type,
+        frequency: "all"
+    }
+
     const { data, isLoading, error } = useQuery({
-        queryKey: ['transactions', currentPage, type],
-        queryFn: () => getUserAllTransactions({ page: currentPage, limit: ITEMS_PER_PAGE, type }),
+        queryKey: ['recurring', currentPage],
+        queryFn: () => getUserAllRecurrings(query),
         enabled: !!session?.user?.id,
         staleTime: 5000 * 5,
     });
 
-    const transactions = data?.data?.transactions || [];
+    const recurrings = data?.data || [];
     const total = data?.total ?? 0;
     const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
 
     // Filter by search
-    const filtered = transactions.filter((tx: ITransaction) =>
+    const filtered = recurrings.filter((tx: IRecurring) =>
         `${tx.type} ${tx.amount} ${tx.note}`
             .toLowerCase()
             .includes(search.toLowerCase())
@@ -54,20 +62,17 @@ export default function TransactionTable() {
     //========= handle delete ===========
     const [deletingItem, setDeletingItem] = useState<ObjectId | null>(null);
 
-    const deleteTransactionMutation = useMutation({
-        mutationFn: (id: ObjectId) => deleteTransaction(id),
+    const deleteRecurringMutation = useMutation({
+        mutationFn: (id: ObjectId) => deleteRecurring(id),
         onSuccess: () => {
-            toast.success("Transaction deleted successfully.");
+            toast.success("Recurring deleted successfully.");
 
-            queryClient.invalidateQueries({ queryKey: ['transactions'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-current-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-previous-month'] });
-            queryClient.invalidateQueries({ queryKey: ['transactions-all-savings'] });
+            queryClient.invalidateQueries({ queryKey: ['recurring'] });
 
             setDeletingItem(null);
         },
         onError: () => {
-            toast.error("Failed to delete transaction.");
+            toast.error("Failed to delete recurring.");
             setDeletingItem(null);
         },
     });
@@ -75,7 +80,7 @@ export default function TransactionTable() {
 
     const handleDelete = (id: ObjectId) => {
         setDeletingItem(id);
-        deleteTransactionMutation.mutate(id);
+        deleteRecurringMutation.mutate(id);
     };
 
 
@@ -87,9 +92,9 @@ export default function TransactionTable() {
 
     // ========= handle edit ==========
     const [editModalStatus, setEditModalStatus] = useState(false);
-    const [editTransaction, seteditTransaction] = useState<ITransaction | null>(null);
-    const handleEdit = (transaction: ITransaction) => {
-        seteditTransaction(transaction);
+    const [editRecurring, seteditRecurring] = useState<IRecurring | null>(null);
+    const handleEdit = (recurring: IRecurring) => {
+        seteditRecurring(recurring);
         setEditModalStatus(true);
     };
 
@@ -120,7 +125,7 @@ export default function TransactionTable() {
                                 <ToggleGroupItem value="savings">Savings</ToggleGroupItem>
                             </ToggleGroup>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <div className='relative md:w-60 lg:w-100'>
                                 <Input
                                     type="text"
@@ -131,6 +136,8 @@ export default function TransactionTable() {
                                 />
                                 <Search className='absolute right-2 top-1/2 -translate-y-1/2 p-1' />
                             </div>
+
+                            <AddRecurringModal />
 
                             {selected.length > 0 &&
                                 <Button variant='destructive' onClick={handleBulkDelete}>
@@ -151,13 +158,13 @@ export default function TransactionTable() {
                                 <TableHead>Amount</TableHead>
                                 <TableHead>Note</TableHead>
                                 <TableHead>Type</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead>Frequency</TableHead>
                                 <TableHead>Action</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filtered.length > 0 && !error ? (
-                                filtered.map((tx: ITransaction) => (
+                                filtered.map((tx: IRecurring) => (
                                     <TableRow
                                         key={`${tx._id}`}
                                     >
@@ -187,7 +194,13 @@ export default function TransactionTable() {
                                             )}
 
                                         </TableCell>
-                                        <TableCell>{format(new Date(tx.date), "dd/MM/yyyy")}</TableCell>
+                                        <TableCell className='capitalize'>
+                                            {tx.frequency == "weekly" ? (
+                                                <Badge variant='default' className='bg-blue-500'>{tx.frequency}</Badge>
+                                            ) : (
+                                                <Badge variant='default' className='bg-amber-500'>{tx.frequency}</Badge>
+                                            )}
+                                        </TableCell>
                                         <TableCell>
                                             <div className='flex gap-2'>
                                                 <Button
@@ -247,11 +260,11 @@ export default function TransactionTable() {
                 </CardContent>
             </Card>
 
-            {editTransaction &&
-                <EditTransactionModal
+            {editRecurring &&
+                <EditRecurringModal
                     isOpen={editModalStatus}
                     setIsOpen={setEditModalStatus}
-                    transaction={editTransaction}
+                    recurring={editRecurring}
                 />
             }
         </>

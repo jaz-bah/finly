@@ -23,15 +23,6 @@ import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group"
 
 export const description = "A horizontal bar chart"
 
-// const chartData = [
-//     { month: "January", amount: 186 },
-//     { month: "February", amount: 305 },
-//     { month: "March", amount: 237 },
-//     { month: "April", amount: 73 },
-//     { month: "May", amount: 209 },
-//     { month: "May", amount: 209 },
-// ]
-
 const chartConfig = {
     amount: {
         label: "amount",
@@ -107,9 +98,11 @@ export function MonthlySavings({ allSavingsTransactions }: Props) {
                 </ChartContainer>
             </CardContent>
 
+
             <CardFooter>
                 <ToggleGroup type="single" variant="outline">
                     <ToggleGroupItem
+                        className="user-select-none"
                         value="prev"
                         onClick={() => canGoPrev && setPage((prev) => prev - 1)}
                         disabled={!canGoPrev}
@@ -118,6 +111,7 @@ export function MonthlySavings({ allSavingsTransactions }: Props) {
                         Prev
                     </ToggleGroupItem>
                     <ToggleGroupItem
+                        className="user-select-none"
                         value="next"
                         onClick={() => canGoNext && setPage((prev) => prev + 1)}
                         disabled={!canGoNext}

@@ -6,6 +6,7 @@ import { MonthlyChart } from "@/components/chart/MonthlyChart";
 import { MonthlySavings } from "@/components/chart/MonthlySavings";
 import { SavingsChart } from "@/components/chart/SavingsChart";
 import { WeeklyChart } from "@/components/chart/WeeklyChart";
+import RecurringUpdateTable from "@/components/table/RecurringUpdateTable";
 import { caculateTransaction } from "@/helper/calculation";
 import {
   getAllSavingsTransactions,
@@ -163,7 +164,16 @@ export default function Home() {
         <MonthlySavings allSavingsTransactions={allSavingsTransactions} />
       </div>
 
-      <MonthlyChart allTransactions={thisMonthAllTransactions} />
+      <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="col-span-1 xl:col-span-2">
+          <MonthlyChart allTransactions={thisMonthAllTransactions} />
+        </div>
+
+        <div className="col-span-1 xl:col-span-1">
+          <RecurringUpdateTable />
+        </div>
+      </div>
+
 
       <span className="hidden">{prevTotalBalance}</span>
     </>
